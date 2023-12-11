@@ -4,39 +4,42 @@ import java.awt.Toolkit; // imports library for reading the data from the serial
 import java.awt.Dimension; // imports library for reading the data from the serial port
 import java.io.IOException;
 Serial myPort; // defines Object Serial
+
+// Adjust following constants to your needs
+final int MAX_DISTANCE = 60;         // cm
+final int RANGE_DIV = 6;             // Range divisions
+final int ANGLE_MARK_SEP = 30;       // Angle mark separations in radar display
+final int ANGLE_MARK_TEXT_SEP = 5;   // Angle mark text sep. in radar display
+final String PROJECT_NAME = "My name / Project Name" ; // My name, my Project Name, etc
+final String SERIAL_PORT = "COM7";  // Serial communication port
+final int BAUD_RATE = 115200;       // Serial communication Baud rate
+
 // defubes variables
 String angle="";
 String distance="";
 String data="";
-String noObject;
 float pixsDistance;
 int iAngle, iDistance;
 int index1=0;
-int index2=0;
-PFont orcFont;
-final int MAX_DISTANCE = 60; // cm
-final int RANGE_DIV = 6;  // Range divisions
+
 void setup() {
-        // getScreenSize() returns the size 
-        // of the screen in pixels 
-     //size (java.awt.Dimension[width], java.awt.Dimension[height]);
- //fullscreen();
-         surface.setResizable(true);
-        Dimension size 
-            = Toolkit.getDefaultToolkit().getScreenSize(); 
+    //surface.setResizable(true);
+  Dimension size = Toolkit.getDefaultToolkit().getScreenSize(); 
+  
+  // width will store the width of the screen 
+  int width = (int)size.getWidth(); 
+  
+  // height will store the height of the screen 
+  int height = (int)size.getHeight(); 
         
-        // width will store the width of the screen 
-        int width = (int)size.getWidth(); 
-        
-        // height will store the height of the screen 
-        int height = (int)size.getHeight(); 
-        
-  //size (width, height); // ***CHANGE THIS TO YOUR SCREEN RESOLUTION***
+  // Auto screen resolution
   surface.setSize(width,height-20);
+  
   smooth();
-  //myPort = new Serial(this, "COM7", 115200); // starts the serial communication
-  //myPort.bufferUntil('.'); // reads the data from the serial port up to the character '.'. So actually it reads this: angle,distance.
+  myPort = new Serial(this, "SERIAL_PORT", BAUD_RATE); // starts the serial communication
+  myPort.bufferUntil('.'); // reads the data from the serial port up to the character '.'. So actually it reads this: angle,distance.
 }
+
 void draw() {
 
   fill(98, 245, 31);
@@ -52,6 +55,7 @@ void draw() {
   drawObject();
   drawText();
 }
+
 void serialEvent (Serial myPort) { // starts reading data from the Serial Port
   // reads the data from the Serial Port up to the character '.' and puts it into the String variable "data".
   data = myPort.readStringUntil('.');
@@ -65,48 +69,45 @@ void serialEvent (Serial myPort) { // starts reading data from the Serial Port
   iAngle = int(angle);
   iDistance = int(distance);
 }
+
 void drawRadar() {
   pushMatrix();
   translate(width/2, height-height*0.074); // moves the starting coordinats to new location
   noFill();
   strokeWeight(2);
   stroke(98, 245, 31);
+  
   // draws the arc lines
   float iSep = (1 -.0625) / RANGE_DIV;
   for (int i = 0; i < RANGE_DIV; i++) {
     arc(0, 0, (width-width*(iSep*i+0.0625)), (width-width*(iSep*i+0.0625)), PI, TWO_PI);
   }
-  /*
-  arc(0, 0, (width-width*0.0625), (width-width*0.0625), PI, TWO_PI);
-  arc(0, 0, (width-width*0.27), (width-width*0.27), PI, TWO_PI);
-  arc(0, 0, (width-width*0.479), (width-width*0.479), PI, TWO_PI);
-  arc(0, 0, (width-width*0.687), (width-width*0.687), PI, TWO_PI);
-  arc(0, 0, (width-width*0.687), (width-width*0.687), PI, TWO_PI);
-  */
 
-  // draws the angle lines
+  // Draw base line
   line(-width/2, 0, width/2, 0);
-  line(0, 0, (-width/2)*cos(radians(30)), (-width/2)*sin(radians(30)));
-  line(0, 0, (-width/2)*cos(radians(60)), (-width/2)*sin(radians(60)));
-  line(0, 0, (-width/2)*cos(radians(90)), (-width/2)*sin(radians(90)));
-  line(0, 0, (-width/2)*cos(radians(120)), (-width/2)*sin(radians(120)));
-  line(0, 0, (-width/2)*cos(radians(150)), (-width/2)*sin(radians(150)));
-  line((-width/2)*cos(radians(30)), 0, width/2, 0);
+  
+  int i = 0;
+  // draws the angle lines at ANGLE_MARK_SEP deggres separation
+  while (++i * ANGLE_MARK_SEP < 180) {
+      line(0, 0, (-width/2)*cos(radians(ANGLE_MARK_SEP * i)), (-width/2)*sin(radians(ANGLE_MARK_SEP * i)));
+  } 
   popMatrix();
 }
+
 void drawObject() {
   pushMatrix();
   translate(width/2, height-height*0.074); // moves the starting coordinats to new location
   strokeWeight(9);
   stroke(255, 10, 10); // red color
   pixsDistance = iDistance*((height-height*0.1666)/MAX_DISTANCE); // covers the distance from the sensor from cm to pixels
-  // limiting the range to 40 cms
+  // limiting the range to MAX_DISTANCE cms
   if (iDistance<MAX_DISTANCE) {
     // draws the object according to the angle and the distance
     line(pixsDistance*cos(radians(iAngle)), -pixsDistance*sin(radians(iAngle)), (width-width*0.514)*cos(radians(iAngle)), -(width-width*0.514)*sin(radians(iAngle)));
   }
   popMatrix();
 }
+
 void drawLine() {
   pushMatrix();
   strokeWeight(9);
@@ -115,63 +116,43 @@ void drawLine() {
   line(0, 0, (height-height*0.12)*cos(radians(iAngle)), -(height-height*0.12)*sin(radians(iAngle))); // draws the line according to the angle
   popMatrix();
 }
-void drawText() { // draws the texts on the screen
 
+void drawText() { // draws the texts on the screen
   pushMatrix();
-  if (iDistance>MAX_DISTANCE) {
-    noObject = "Out of Range";
-  } else {
-    noObject = "In Range";
-  }
+  
   fill(0, 0, 0);
   noStroke();
   rect(0, height-height*0.0648, width, height);
   fill(98, 245, 31);
   textSize(25);
-/*
-  float iSep = (.5 - 0.0729) / 6;
-  for (int i = 0; i < 6; i++) {
-    text((i+1)+"0cm", (width-width*(iSep*i+0.0729)), height-height*0.0833);
-  }
-*/
+
   float iSep = (.5 -.0625) / RANGE_DIV;
   for (int i = 0; i < RANGE_DIV; i++) {
     text((MAX_DISTANCE - MAX_DISTANCE/ RANGE_DIV * i)+"cm", (width-width*(iSep*i+0.0625)), height-height*0.0833);
   }
   
-/*
-  text("10cm", width-width*0.3854, height-height*0.0833);
-  text("20cm", width-width*0.281, height-height*0.0833);
-  text("30cm", width-width*0.177, height-height*0.0833);
-  text("40cm", width-width*0.0729, height-height*0.0833);
-*/
   textSize(40);
-  text("Felix Rimón ", width-width*0.875, height-height*0.0277);
+  text(PROJECT_NAME, width-width*0.875, height-height*0.0277);
   text("Angle: " + iAngle +" ", width-width*0.48, height-height*0.0277);
-  text("Distance: ", width-width*0.26, height-height*0.0277);
   if (iDistance<MAX_DISTANCE) {
-    text("              " + iDistance +" cm", width-width*0.225, height-height*0.0277);
+    text("Distance: " + iDistance +" cm", width-width*0.26, height-height*0.0277);
+  } else {
+    text("Distance: ", width-width*0.26, height-height*0.0277);
   }
   textSize(25);
   fill(98, 245, 60);
-  translate((width-width*0.4994)+width/2*cos(radians(30)), (height-height*0.0907)-width/2*sin(radians(30)));
-  rotate(-radians(-60));
-  text("30", 0, 0);
-  resetMatrix();
-  translate((width-width*0.503)+width/2*cos(radians(60)), (height-height*0.0888)-width/2*sin(radians(60)));
-  rotate(-radians(-30));
-  text("60", 0, 0);
-  resetMatrix();
-  translate((width-width*0.507)+width/2*cos(radians(90)), (height-height*0.0833)-width/2*sin(radians(90)));
-  rotate(radians(0));
-  text("90", 0, 0);
-  resetMatrix();
-  translate(width-width*0.513+width/2*cos(radians(120)), (height-height*0.07129)-width/2*sin(radians(120)));
-  rotate(radians(-30));
-  text("120", 0, 0);
-  resetMatrix();
-  translate((width-width*0.5104)+width/2*cos(radians(150)), (height-height*0.0574)-width/2*sin(radians(150)));
-  rotate(radians(-60));
-  text("150", 0, 0);
+  
+  // draws the angle lines text at  ANGLE_MARK_SEP deggres separation
+  textAlign(CENTER);
+  int i = 0;
+  while (++i * ANGLE_MARK_SEP < 180){
+    resetMatrix();  
+    translate(width/2, height-height*0.074); // moves the starting coordinats to new location
+    translate((-width/2 - ANGLE_MARK_TEXT_SEP)*cos(radians(ANGLE_MARK_SEP * i)), (-width/2 - ANGLE_MARK_TEXT_SEP)*sin(radians(ANGLE_MARK_SEP * i)));
+    rotate(-radians(90 - ANGLE_MARK_SEP * i));
+  
+    text(ANGLE_MARK_SEP * i, 0, 0);   
+  } 
+  textAlign(LEFT);
   popMatrix();
 }
