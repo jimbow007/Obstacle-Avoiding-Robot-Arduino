@@ -39,7 +39,7 @@ void setup() {
   printArray(Serial.list());
   myPort = new Serial(this, SERIAL_PORT, BAUD_RATE); // starts the serial communication
   myPort.bufferUntil('.'); // reads the data from the serial port up to the character '.'. So actually it reads this: angle,distance.
-  print("   Angle: " + iAngle + ", Distance: " + iDistance);
+  //print("   Angle: " + iAngle + ", Distance: " + iDistance);
 
 }
 
