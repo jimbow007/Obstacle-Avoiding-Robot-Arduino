@@ -11,7 +11,7 @@ final int RANGE_DIV = 6;             // Range divisions
 final int ANGLE_MARK_SEP = 30;       // Angle mark separations in radar display
 final int ANGLE_MARK_TEXT_SEP = 5;   // Angle mark text sep. in radar display
 final String PROJECT_NAME = "My name / Project Name" ; // My name, my Project Name, etc
-final String SERIAL_PORT = "COM7";  // Serial communication port
+final String SERIAL_PORT = "COM28";  // Serial communication port
 final int BAUD_RATE = 115200;       // Serial communication Baud rate
 
 // defubes variables
@@ -36,8 +36,11 @@ void setup() {
   surface.setSize(width,height-20);
   
   smooth();
-  myPort = new Serial(this, "SERIAL_PORT", BAUD_RATE); // starts the serial communication
+  printArray(Serial.list());
+  myPort = new Serial(this, SERIAL_PORT, BAUD_RATE); // starts the serial communication
   myPort.bufferUntil('.'); // reads the data from the serial port up to the character '.'. So actually it reads this: angle,distance.
+  print("   Angle: " + iAngle + ", Distance: " + iDistance);
+
 }
 
 void draw() {
@@ -68,6 +71,7 @@ void serialEvent (Serial myPort) { // starts reading data from the Serial Port
   // converts the String variables into Integer
   iAngle = int(angle);
   iDistance = int(distance);
+  print("Angle: " + iAngle + ", Distance: " + iDistance);
 }
 
 void drawRadar() {
@@ -83,7 +87,7 @@ void drawRadar() {
     arc(0, 0, (width-width*(iSep*i+0.0625)), (width-width*(iSep*i+0.0625)), PI, TWO_PI);
   }
 
-  // Draw base line
+  // Drw base line
   line(-width/2, 0, width/2, 0);
   
   int i = 0;
@@ -151,7 +155,7 @@ void drawText() { // draws the texts on the screen
     translate((-width/2 - ANGLE_MARK_TEXT_SEP)*cos(radians(ANGLE_MARK_SEP * i)), (-width/2 - ANGLE_MARK_TEXT_SEP)*sin(radians(ANGLE_MARK_SEP * i)));
     rotate(-radians(90 - ANGLE_MARK_SEP * i));
   
-    text(ANGLE_MARK_SEP * i, 0, 0);   
+    text(180 - ANGLE_MARK_SEP * i, 0, 0);   
   } 
   textAlign(LEFT);
   popMatrix();
